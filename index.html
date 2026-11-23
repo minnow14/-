@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TWO SCRIPTS, ONE CANVAS</title>
+<meta name="description" content="用韓文字母，寫出漢字。한글 자모로 한자를 쓰다.">
+<meta property="og:title" content="TWO SCRIPTS, ONE CANVAS">
+<meta property="og:description" content="用韓文字母，寫出漢字。한글 자모로 한자를 쓰다.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#ffffff">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&family=Noto+Serif+TC:wght@900&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ============ S1 HOME ============ -->
+<section id="view-home" class="view" data-view="home">
+  <header class="site-header">
+    <a class="logo" href="#/">TWO SCRIPTS, ONE CANVAS</a>
+  </header>
+
+  <main class="home">
+    <section class="hero">
+      <div class="hero-art">
+        <canvas id="hero-canvas" width="1080" height="1080" aria-label="愛 / 사랑"></canvas>
+      </div>
+      <div class="hero-copy">
+        <h1 class="bi">
+          <span class="zh">用韓文字母，寫出漢字</span>
+          <span class="ko" lang="ko">한글 자모로 한자를 쓰다</span>
+        </h1>
+        <p class="bi lead">
+          <span class="zh">24 個韓文字母，拼出你熟悉的繁體字。</span>
+          <span class="ko" lang="ko">한글 자모 24개로 익숙한 번체자를 만들어 보세요.</span>
+        </p>
+        <a class="btn btn-fill btn-lg" href="#modes">
+          <span class="bi"><span class="zh">開始</span><span class="ko" lang="ko">시작</span></span>
+        </a>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2 class="block-title bi-row"><span class="zh">範例</span><span class="ko" lang="ko">예시</span></h2>
+      <div class="examples" id="examples"></div>
+    </section>
+
+    <section class="block" id="modes">
+      <h2 class="block-title bi-row"><span class="zh">選擇模式</span><span class="ko" lang="ko">모드 선택</span></h2>
+      <div class="modes">
+        <a class="mode-card" href="#/fill">
+          <span class="mode-letter">A</span>
+          <span class="bi mode-name"><span class="zh">漢字填充</span><span class="ko" lang="ko">한자 채우기</span></span>
+          <span class="bi mode-desc"><span class="zh">輸入漢字，用韓文填滿</span><span class="ko" lang="ko">한자를 입력하고 한글로 채우기</span></span>
+          <span class="mode-go bi-row"><span class="zh">進入</span><span class="ko" lang="ko">들어가기</span><span aria-hidden="true">→</span></span>
+        </a>
+        <a class="mode-card" href="#/free">
+          <span class="mode-letter">B</span>
+          <span class="bi mode-name"><span class="zh">自由創作</span><span class="ko" lang="ko">자유 캔버스</span></span>
+          <span class="bi mode-desc"><span class="zh">用字母一個一個拼出圖形</span><span class="ko" lang="ko">자모를 하나씩 조립하기</span></span>
+          <span class="mode-go bi-row"><span class="zh">進入</span><span class="ko" lang="ko">들어가기</span><span aria-hidden="true">→</span></span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span class="footer-mark">PB03</span>
+    <span class="footer-note">Fonts: Noto Sans TC · Noto Serif TC · Noto Sans KR — SIL Open Font License 1.1</span>
+  </footer>
+</section>
+
+<!-- ============ EDITOR HEADER (shared) ============ -->
+<header class="editor-header" id="editor-header" hidden>
+  <a class="icon-btn" href="#/" aria-label="返回 / 뒤로"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></svg></a>
+  <nav class="seg mode-tabs" aria-label="模式 / 모드">
+    <a class="seg-item" href="#/fill" data-route="fill"><span class="bi-row"><b>A</b><span class="zh">漢字填充</span><span class="ko" lang="ko">한자 채우기</span></span></a>
+    <a class="seg-item" href="#/free" data-route="free"><span class="bi-row"><b>B</b><span class="zh">自由創作</span><span class="ko" lang="ko">자유 캔버스</span></span></a>
+  </nav>
+  <button class="icon-btn" id="help-btn" type="button" aria-label="說明 / 도움말">i</button>
+</header>
+
+<!-- ============ S2 MODE A: FILL ============ -->
+<section id="view-fill" class="view editor" data-view="fill" hidden>
+  <div class="editor-grid">
+    <div class="editor-center">
+      <div class="stage-wrap" id="fill-wrap">
+        <canvas id="fill-canvas" width="1080" height="1080"></canvas>
+        <div class="stage-loading" id="fill-loading" hidden>
+          <span class="bi"><span class="zh">載入字型中…</span><span class="ko" lang="ko">폰트 불러오는 중…</span></span>
+        </div>
+      </div>
+      <div class="stage-bar">
+        <div class="seg" role="radiogroup" aria-label="比例 / 비율" data-control="fill-ratio">
+          <button type="button" class="seg-item" data-value="1:1">1:1</button>
+          <button type="button" class="seg-item" data-value="4:5">4:5</button>
+        </div>
+        <button type="button" class="btn btn-line btn-sm" id="fill-shuffle">
+          <span class="bi-row"><span class="zh">重新排列</span><span class="ko" lang="ko">다시 배치</span></span>
+        </button>
+      </div>
+      <p class="stage-note" id="fill-note" hidden></p>
+    </div>
+
+    <div class="tabs" role="tablist" data-tabs="fill">
+      <button type="button" role="tab" class="tab" data-tab="hanzi"><span class="bi"><span class="zh">漢字</span><span class="ko" lang="ko">한자</span></span></button>
+      <button type="button" role="tab" class="tab" data-tab="fill"><span class="bi"><span class="zh">填充</span><span class="ko" lang="ko">채우기</span></span></button>
+      <button type="button" role="tab" class="tab" data-tab="color"><span class="bi"><span class="zh">顏色</span><span class="ko" lang="ko">색상</span></span></button>
+    </div>
+
+    <aside class="editor-side editor-left">
+      <section class="panel" data-panel="hanzi">
+        <h3 class="panel-title bi-row"><span class="zh">漢字</span><span class="ko" lang="ko">한자</span></h3>
+        <label class="field">
+          <span class="field-label bi-row"><span class="zh">輸入漢字（1–4 字）</span><span class="ko" lang="ko">한자 입력 (1~4자)</span></span>
+          <input type="text" id="fill-hanzi" class="input input-hanzi" value="愛" autocomplete="off" spellcheck="false" inputmode="text">
+        </label>
+        <p class="hint" id="fill-hanzi-hint" hidden></p>
+        <div class="field">
+          <span class="field-label bi-row"><span class="zh">字體</span><span class="ko" lang="ko">서체</span></span>
+          <div class="seg" role="radiogroup" data-control="fill-font">
+            <button type="button" class="seg-item" data-value="sans"><span class="bi-row"><span class="zh">黑體</span><span class="ko" lang="ko">고딕</span></span></button>
+            <button type="button" class="seg-item" data-value="serif"><span class="bi-row"><span class="zh">明體</span><span class="ko" lang="ko">명조</span></span></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="fill">
+        <h3 class="panel-title bi-row"><span class="zh">填充</span><span class="ko" lang="ko">채우기</span></h3>
+        <div class="field">
+          <span class="field-label bi-row"><span class="zh">材料</span><span class="ko" lang="ko">재료</span></span>
+          <div class="seg" role="radiogroup" data-control="fill-material">
+            <button type="button" class="seg-item" data-value="word"><span class="bi-row"><span class="zh">單字</span><span class="ko" lang="ko">단어</span></span></button>
+            <button type="button" class="seg-item" data-value="jamo"><span class="bi-row"><span class="zh">字母</span><span class="ko" lang="ko">자모</span></span></button>
+            <button type="button" class="seg-item" data-value="mix"><span class="bi-row"><span class="zh">混合</span><span class="ko" lang="ko">혼합</span></span></button>
+          </div>
+        </div>
+        <label class="field" data-show-for="word mix">
+          <span class="field-label bi-row"><span class="zh">韓文單字（用空格分開）</span><span class="ko" lang="ko">한글 단어 (띄어쓰기로 구분)</span></span>
+          <input type="text" id="fill-words" class="input" value="사랑" lang="ko" autocomplete="off" spellcheck="false">
+        </label>
+        <div class="field" data-show-for="jamo mix">
+          <span class="field-label bi-row"><span class="zh">字母</span><span class="ko" lang="ko">자모</span></span>
+          <div class="jamo-chips" id="fill-jamo"></div>
+        </div>
+        <div class="field">
+          <span class="field-label bi-row"><span class="zh">密度</span><span class="ko" lang="ko">밀도</span></span>
+          <input type="range" id="fill-density" class="range" min="1" max="10" step="1" value="5">
+        </div>
+        <div class="field">
+          <span class="field-label bi-row"><span class="zh">大小</span><span class="ko" lang="ko">크기</span></span>
+          <div class="seg" role="radiogroup" data-control="fill-size">
+            <button type="button" class="seg-item" data-value="uniform"><span class="bi-row"><span class="zh">一致</span><span class="ko" lang="ko">균일</span></span></button>
+            <button type="button" class="seg-item" data-value="random"><span class="bi-row"><span class="zh">隨機</span><span class="ko" lang="ko">랜덤</span></span></button>
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-label bi-row"><span class="zh">旋轉</span><span class="ko" lang="ko">회전</span></span>
+          <div class="seg" role="radiogroup" data-control="fill-rotate">
+            <button type="button" class="seg-item" data-value="none"><span class="bi-row"><span class="zh">無</span><span class="ko" lang="ko">없음</span></span></button>
+            <button type="button" class="seg-item" data-value="random"><span class="bi-row"><span class="zh">隨機</span><span class="ko" lang="ko">랜덤</span></span></button>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <aside class="editor-side editor-right">
+      <section class="panel" data-panel="color">
+        <h3 class="panel-title bi-row"><span class="zh">顏色</span><span class="ko" lang="ko">색상</span></h3>
+        <div class="field">
+          <span class="field-label bi-row"><span class="zh">文字顏色</span><span class="ko" lang="ko">글자색</span></span>
+          <div class="swatches" data-swatches="fill-fg"></div>
+        </div>
+        <div class="field">
+          <span class="field-label bi-row"><span class="zh">背景顏色</span><span class="ko" lang="ko">배경색</span></span>
+          <div class="swatches" data-swatches="fill-bg"></div>
+        </div>
+        <div class="field field-row">
+          <button type="button" class="btn btn-line btn-sm" id="fill-invert"><span class="bi-row"><span class="zh">反轉</span><span class="ko" lang="ko">뒤집기</span></span></button>
+          <label class="toggle">
+            <input type="checkbox" id="fill-outline">
+            <span class="toggle-ui" aria-hidden="true"></span>
+            <span class="bi-row"><span class="zh">外框</span><span class="ko" lang="ko">외곽선</span></span>
+          </label>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="action-bar">
+    <button type="button" class="btn btn-fill btn-block" data-open-share="fill">
+      <span class="bi-row"><span class="zh">儲存與分享</span><span class="ko" lang="ko">저장·공유</span></span>
+    </button>
+  </div>
+</section>
+
+<!-- ============ S3 MODE B: FREE ============ -->
+<section id="view-free" class="view editor" data-view="free" hidden>
+  <div class="editor-grid">
+    <div class="editor-center">
+      <div class="toolbar" role="toolbar" aria-label="工具 / 도구">
+        <button type="button" class="tool" data-act="undo" title="復原 / 실행 취소"><span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></span><span class="bi"><span class="zh">復原</span><span class="ko" lang="ko">취소</span></span></button>
+        <button type="button" class="tool" data-act="redo" title="重做 / 다시 실행"><span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></span><span class="bi"><span class="zh">重做</span><span class="ko" lang="ko">다시</span></span></button>
+        <span class="tool-sep" aria-hidden="true"></span>
+        <button type="button" class="tool" data-act="duplicate" data-needs-sel title="複製 / 복제"><span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg></span><span class="bi"><span class="zh">複製</span><span class="ko" lang="ko">복제</span></span></button>
+        <button type="button" class="tool" data-act="flip" data-needs-sel title="翻轉 / 반전"><span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M8 7 3 12l5 5V7z"/><path d="M16 7l5 5-5 5V7z"/></svg></span><span class="bi"><span class="zh">翻轉</span><span class="ko" lang="ko">반전</span></span></button>
+        <button type="button" class="tool" data-act="forward" data-needs-sel title="上移 / 앞으로"><span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg></span><span class="bi"><span class="zh">上移</span><span class="ko" lang="ko">앞으로</span></span></button>
+        <button type="button" class="tool" data-act="backward" data-needs-sel title="下移 / 뒤로"><span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg></span><span class="bi"><span class="zh">下移</span><span class="ko" lang="ko">뒤로</span></span></button>
+        <button type="button" class="tool" data-act="delete" data-needs-sel title="刪除 / 삭제"><span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg></span><span class="bi"><span class="zh">刪除</span><span class="ko" lang="ko">삭제</span></span></button>
+        <span class="tool-sep" aria-hidden="true"></span>
+        <button type="button" class="tool" data-act="clear" title="清除 / 전체 지우기"><span class="tool-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg></span><span class="bi"><span class="zh">清除</span><span class="ko" lang="ko">지우기</span></span></button>
+      </div>
+      <div class="stage-wrap" id="free-wrap">
+        <div id="free-stage" class="konva-host"></div>
+        <div class="stage-empty" id="free-empty">
+          <span class="bi"><span class="zh">點選下方字母加入</span><span class="ko" lang="ko">아래 자모를 눌러 추가하세요</span></span>
+        </div>
+        <div class="stage-loading" id="free-loading" hidden>
+          <span class="bi"><span class="zh">載入字型中…</span><span class="ko" lang="ko">폰트 불러오는 중…</span></span>
+        </div>
+      </div>
+      <div class="stage-bar">
+        <div class="seg" role="radiogroup" aria-label="比例 / 비율" data-control="free-ratio">
+          <button type="button" class="seg-item" data-value="1:1">1:1</button>
+          <button type="button" class="seg-item" data-value="4:5">4:5</button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="editor-side editor-left">
+      <section class="panel is-static">
+        <div class="seg seg-tabs" role="tablist" data-control="free-palette">
+          <button type="button" class="seg-item" data-value="c"><span class="bi-row"><span class="zh">子音</span><span class="ko" lang="ko">자음</span></span></button>
+          <button type="button" class="seg-item" data-value="v"><span class="bi-row"><span class="zh">母音</span><span class="ko" lang="ko">모음</span></span></button>
+        </div>
+        <div class="palette" id="free-palette" lang="ko"></div>
+        <p class="hint bi-row"><span class="zh">長按字母可看讀音</span><span class="ko" lang="ko">길게 누르면 이름이 보여요</span></p>
+      </section>
+    </aside>
+
+    <aside class="editor-side editor-right">
+      <section class="panel is-static" id="free-props" hidden>
+        <h3 class="panel-title bi-row"><span class="zh">選取的字母</span><span class="ko" lang="ko">선택한 자모</span></h3>
+        <div class="field">
+          <span class="field-label bi-row"><span class="zh">顏色</span><span class="ko" lang="ko">색상</span></span>
+          <div class="swatches" data-swatches="free-fg"></div>
+        </div>
+        <div class="field">
+          <span class="field-label bi-row"><span class="zh">大小</span><span class="ko" lang="ko">크기</span></span>
+          <input type="range" id="free-size" class="range" min="0.1" max="3" step="0.01" value="1">
+        </div>
+        <div class="field">
+          <span class="field-label bi-row"><span class="zh">旋轉</span><span class="ko" lang="ko">회전</span><output id="free-rot-out" class="out">0°</output></span>
+          <input type="range" id="free-rot" class="range" min="-180" max="180" step="1" value="0">
+        </div>
+      </section>
+      <section class="panel is-static">
+        <h3 class="panel-title bi-row"><span class="zh">背景</span><span class="ko" lang="ko">배경</span></h3>
+        <div class="swatches" data-swatches="free-bg"></div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="action-bar">
+    <button type="button" class="btn btn-fill btn-block" data-open-share="free">
+      <span class="bi-row"><span class="zh">儲存與分享</span><span class="ko" lang="ko">저장·공유</span></span>
+    </button>
+  </div>
+</section>
+
+<!-- ============ S4 SHARE SHEET ============ -->
+<dialog class="sheet" id="share-sheet" aria-labelledby="share-title">
+  <div class="sheet-head">
+    <h2 id="share-title" class="bi-row"><span class="zh">儲存與分享</span><span class="ko" lang="ko">저장·공유</span></h2>
+    <button type="button" class="icon-btn" data-close aria-label="關閉 / 닫기"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg></button>
+  </div>
+  <div class="sheet-preview"><canvas id="share-preview" width="1080" height="1080"></canvas></div>
+  <div class="sheet-row">
+    <span class="field-label bi-row"><span class="zh">比例</span><span class="ko" lang="ko">비율</span></span>
+    <div class="seg" role="radiogroup" data-control="share-ratio">
+      <button type="button" class="seg-item" data-value="1:1">1:1</button>
+      <button type="button" class="seg-item" data-value="4:5">4:5</button>
+    </div>
+  </div>
+  <div class="sheet-row">
+    <span class="field-label bi-row"><span class="zh">浮水印</span><span class="ko" lang="ko">워터마크</span><b class="mono">PB03</b></span>
+    <label class="toggle">
+      <input type="checkbox" id="share-wm" checked>
+      <span class="toggle-ui" aria-hidden="true"></span>
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button type="button" class="btn btn-fill btn-block" id="share-save"><span class="bi-row"><span class="zh">儲存圖片</span><span class="ko" lang="ko">이미지 저장</span></span></button>
+    <button type="button" class="btn btn-line btn-block" id="share-native" hidden><span class="bi-row"><span class="zh">分享</span><span class="ko" lang="ko">공유</span></span></button>
+    <button type="button" class="btn btn-text btn-block" id="share-link"><span class="bi-row"><span class="zh">複製連結</span><span class="ko" lang="ko">링크 복사</span></span></button>
+  </div>
+  <p class="sheet-note bi">
+    <span class="zh">LINE · Instagram · Facebook · Threads：先儲存圖片，再到 App 上傳。</span>
+    <span class="ko" lang="ko">이미지를 저장한 뒤 앱에서 업로드하세요.</span>
+  </p>
+</dialog>
+
+<!-- ============ HELP ============ -->
+<dialog class="sheet" id="help-sheet" aria-labelledby="help-title">
+  <div class="sheet-head">
+    <h2 id="help-title" class="bi-row"><span class="zh">怎麼玩</span><span class="ko" lang="ko">사용법</span></h2>
+    <button type="button" class="icon-btn" data-close aria-label="關閉 / 닫기"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg></button>
+  </div>
+  <ol class="help-list" data-help="fill">
+    <li class="bi"><span class="zh">輸入漢字，畫面會自動用韓文填滿。</span><span class="ko" lang="ko">한자를 입력하면 한글로 자동으로 채워져요.</span></li>
+    <li class="bi"><span class="zh">在「填充」換單字、字母、密度。</span><span class="ko" lang="ko">'채우기'에서 단어, 자모, 밀도를 바꿔요.</span></li>
+    <li class="bi"><span class="zh">按「重新排列」換一種排法。</span><span class="ko" lang="ko">'다시 배치'를 누르면 배치가 바뀌어요.</span></li>
+  </ol>
+  <ol class="help-list" data-help="free">
+    <li class="bi"><span class="zh">點選字母，加到畫布上。</span><span class="ko" lang="ko">자모를 누르면 캔버스에 추가돼요.</span></li>
+    <li class="bi"><span class="zh">拖曳移動，用控制點縮放、拉長、旋轉。</span><span class="ko" lang="ko">끌어서 옮기고, 핸들로 크기·비율·회전을 바꿔요.</span></li>
+    <li class="bi"><span class="zh">把字母拼成漢字的筆畫和部首。</span><span class="ko" lang="ko">자모를 한자의 획과 부수처럼 조립해 보세요.</span></li>
+  </ol>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<div class="jamo-tip" id="jamo-tip" hidden></div>
+
+<script src="vendor/konva.min.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
