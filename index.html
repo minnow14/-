@@ -238,6 +238,42 @@
         <div class="palette" id="free-palette" lang="ko"></div>
         <p class="hint bi-row"><span class="zh">長按字母可看讀音</span><span class="ko" lang="ko">길게 누르면 이름이 보여요</span></p>
       </section>
+      <section class="panel is-static" id="free-guide-panel">
+        <h3 class="panel-title bi-row"><span class="zh">底圖漢字</span><span class="ko" lang="ko">배경 한자</span></h3>
+        <p class="hint bi"><span class="zh">放一個漢字當底圖，照著筆畫拼字母。</span><span class="ko" lang="ko">한자를 배경에 깔고, 그 획에 맞춰 자모를 놓아 보세요.</span></p>
+        <div class="field">
+          <span class="field-label bi-row"><span class="zh">輸入漢字（1–4 字）</span><span class="ko" lang="ko">한자 입력 (1~4자)</span></span>
+          <div class="input-row">
+            <input type="text" id="free-guide" class="input input-hanzi" placeholder="品" autocomplete="off" spellcheck="false" aria-label="底圖漢字 / 배경 한자">
+            <button type="button" class="btn btn-line btn-sm" id="free-guide-clear"><span class="bi-row"><span class="zh">清除</span><span class="ko" lang="ko">지우기</span></span></button>
+          </div>
+          <p class="hint" id="free-guide-hint" hidden></p>
+          <div class="quick-chips" id="free-guide-quick" aria-label="快速選擇 / 빠른 선택"></div>
+        </div>
+        <div class="field">
+          <span class="field-label bi-row"><span class="zh">字體</span><span class="ko" lang="ko">서체</span></span>
+          <div class="seg" role="radiogroup" data-control="free-guide-font">
+            <button type="button" class="seg-item" data-value="sans"><span class="bi-row"><span class="zh">黑體</span><span class="ko" lang="ko">고딕</span></span></button>
+            <button type="button" class="seg-item" data-value="serif"><span class="bi-row"><span class="zh">明體</span><span class="ko" lang="ko">명조</span></span></button>
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-label bi-row"><span class="zh">樣式</span><span class="ko" lang="ko">모양</span></span>
+          <div class="seg" role="radiogroup" data-control="free-guide-style">
+            <button type="button" class="seg-item" data-value="fill"><span class="bi-row"><span class="zh">實心</span><span class="ko" lang="ko">채움</span></span></button>
+            <button type="button" class="seg-item" data-value="outline"><span class="bi-row"><span class="zh">外框</span><span class="ko" lang="ko">외곽선</span></span></button>
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-label bi-row"><span class="zh">濃淡</span><span class="ko" lang="ko">진하기</span></span>
+          <input type="range" id="free-guide-alpha" class="range" min="0.06" max="0.5" step="0.01" value="0.18" aria-label="濃淡 / 진하기">
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="free-guide-include">
+          <span class="toggle-ui" aria-hidden="true"></span>
+          <span class="bi-row"><span class="zh">儲存時包含底圖</span><span class="ko" lang="ko">저장할 때 배경 한자 포함</span></span>
+        </label>
+      </section>
     </aside>
 
     <aside class="editor-side editor-right">
@@ -316,6 +352,7 @@
   <ol class="help-list" data-help="free">
     <li class="bi"><span class="zh">點選字母，加到畫布上。</span><span class="ko" lang="ko">자모를 누르면 캔버스에 추가돼요.</span></li>
     <li class="bi"><span class="zh">拖曳移動，用控制點縮放、拉長、旋轉。</span><span class="ko" lang="ko">끌어서 옮기고, 핸들로 크기·비율·회전을 바꿔요.</span></li>
+    <li class="bi"><span class="zh">在「底圖漢字」放一個漢字，照著筆畫拼字母。</span><span class="ko" lang="ko">'배경 한자'에 한자를 깔고 획에 맞춰 자모를 놓아 보세요.</span></li>
     <li class="bi"><span class="zh">把字母拼成漢字的筆畫和部首。</span><span class="ko" lang="ko">자모를 한자의 획과 부수처럼 조립해 보세요.</span></li>
   </ol>
 </dialog>
