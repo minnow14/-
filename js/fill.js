@@ -47,9 +47,40 @@ function layoutHan(chars, W, H, hanFontAt) {
   };
 }
 
+export const hanSpecFor = (maskFont) => (maskFont === 'serif' ? FONTS.hanSerif : FONTS.hanSans);
+
+/**
+ * Draw Han characters as a tracing guide, using the same layout as the fill mask.
+ * guide: { text, maskFont, style: 'fill' | 'outline', color, alpha }
+ */
+export function drawHanGuide(ctx, W, H, guide) {
+  const chars = Array.from(guide.text || '').filter(isHan).slice(0, 4);
+  if (!chars.length) return;
+  const hanFontAt = (px) => fontString(hanSpecFor(guide.maskFont), px);
+  const { glyphs } = layoutHan(chars, W, H, hanFontAt);
+  ctx.save();
+  ctx.globalAlpha = guide.alpha;
+  ctx.fillStyle = guide.color;
+  ctx.strokeStyle = guide.color;
+  ctx.lineWidth = Math.max(2, W / 270);
+  ctx.lineJoin = 'round';
+  for (const g of glyphs) {
+    const m = inkMetrics(g.ch, hanFontAt);
+    const s = g.size / 100;
+    ctx.font = hanFontAt(g.size);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    const x = g.x + m.left * s;
+    const y = g.y + m.ascent * s;
+    if (guide.style === 'outline') ctx.strokeText(g.ch, x, y);
+    else ctx.fillText(g.ch, x, y);
+  }
+  ctx.restore();
+}
+
 /** Fonts needed to render these options. Call before renderFill. */
 export async function prepareFill(opts) {
-  const han = opts.maskFont === 'serif' ? FONTS.hanSerif : FONTS.hanSans;
+  const han = hanSpecFor(opts.maskFont);
   const koText = [...opts.words, ...opts.jamo].join('') || '가';
   await Promise.all([ensureFont(han, opts.hanzi || '愛'), ensureFont(FONTS.koFill, koText)]);
 }
@@ -71,7 +102,7 @@ export function renderFill(canvas, opts) {
   const chars = Array.from(opts.hanzi || '').filter(isHan).slice(0, 4);
   if (!chars.length) return { placed: 0, empty: true };
 
-  const hanSpec = opts.maskFont === 'serif' ? FONTS.hanSerif : FONTS.hanSans;
+  const hanSpec = hanSpecFor(opts.maskFont);
   const hanFontAt = (px) => fontString(hanSpec, px);
   const koFontAt = (px) => fontString(FONTS.koFill, px);
   const { glyphs } = layoutHan(chars, W, H, hanFontAt);

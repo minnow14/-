@@ -2,7 +2,7 @@
 import { CONSONANTS, VOWELS, ALL_JAMO, JAMO_INFO, uniqueJamo, decompose } from './jamo.js';
 import { FONTS, ensureFont } from './fonts.js';
 import { clearMetricsCache } from './glyph.js';
-import { renderFill, prepareFill, isHan } from './fill.js';
+import { renderFill, prepareFill, isHan, hanSpecFor } from './fill.js';
 import { FreeCanvas, renderSnapshot, ratioHeight } from './free.js';
 import { initShare } from './share.js';
 import { bi, setSeg, bindSeg, buildSwatches, isDark } from './ui.js';
@@ -40,12 +40,14 @@ const EXAMPLES = [
     mode: 'free',
     title: ['用三個 ㅁ 拼出「品」', 'ㅁ 세 개로 品 만들기'],
     jamo: 'ㅁ ㅁ ㅁ',
+    guide: '品',
     snapshot: {
       ratio: '1:1', bg: '#000000',
       items: [
-        { ch: 'ㅁ', x: 540, y: 330, rotation: 0, scaleX: 1.55, scaleY: 1.2, fill: '#ffffff', flipX: false },
-        { ch: 'ㅁ', x: 318, y: 765, rotation: 0, scaleX: 1.3, scaleY: 1.35, fill: '#ffffff', flipX: false },
-        { ch: 'ㅁ', x: 762, y: 765, rotation: 0, scaleX: 1.3, scaleY: 1.35, fill: '#ffffff', flipX: false },
+        // Sized to the 品 guide (Noto Sans TC 700): ink boxes 585×360, 378×448, 392×448; ㅁ ink is 180×150 at 300px.
+        { ch: 'ㅁ', x: 538, y: 273, rotation: 0, scaleX: 3.25, scaleY: 2.4, fill: '#ffffff', flipX: false },
+        { ch: 'ㅁ', x: 298, y: 761, rotation: 0, scaleX: 2.1, scaleY: 2.99, fill: '#ffffff', flipX: false },
+        { ch: 'ㅁ', x: 768, y: 761, rotation: 0, scaleX: 2.18, scaleY: 2.99, fill: '#ffffff', flipX: false },
       ],
     },
   },
@@ -405,6 +407,72 @@ async function initFree() {
   setSeg(paletteSeg, 'c');
   buildPalette('c');
 
+  // Tracing guide (底圖漢字 / 배경 한자)
+  const guideIn = $('#free-guide');
+  const guideHint = $('#free-guide-hint');
+  const guideQuick = $('#free-guide-quick');
+  const guideFontSeg = $('[data-control="free-guide-font"]');
+  const guideStyleSeg = $('[data-control="free-guide-style"]');
+  const guideAlpha = $('#free-guide-alpha');
+  const guideInclude = $('#free-guide-include');
+  const QUICK = ['品', '田', '山', '回', '福', '愛'];
+  for (const ch of QUICK) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'quick-chip';
+    b.textContent = ch;
+    b.addEventListener('click', () => applyGuide({ text: fc.guide.text === ch ? '' : ch }));
+    guideQuick.appendChild(b);
+  }
+  function syncGuideUI() {
+    const g = fc.guide;
+    if (guideIn.value !== g.text) guideIn.value = g.text;
+    setSeg(guideFontSeg, g.maskFont);
+    setSeg(guideStyleSeg, g.style);
+    guideAlpha.value = g.alpha;
+    guideInclude.checked = g.include;
+    $$('.quick-chip', guideQuick).forEach((b) => b.setAttribute('aria-pressed', String(b.textContent === g.text)));
+    // Keep the empty-state hint readable when a guide sits in the middle of the canvas.
+    empty.classList.toggle('is-bottom', fc.hasGuide());
+  }
+  let guideToken = 0;
+  async function applyGuide(patch) {
+    const my = ++guideToken;
+    const next = { ...fc.guide, ...patch };
+    if (next.text) {
+      const slow = setTimeout(() => { if (my === guideToken) loading.hidden = false; }, 250);
+      await ensureFont(hanSpecFor(next.maskFont), next.text);
+      clearTimeout(slow);
+      loading.hidden = true;
+      if (my !== guideToken) return;
+    }
+    fc.setGuide(patch);
+    syncGuideUI();
+  }
+  let guideComposing = false;
+  const onGuideInput = () => {
+    const raw = Array.from(guideIn.value);
+    const han = raw.filter(isHan);
+    let warn = '';
+    if (han.length < raw.length) warn = bi('只能輸入漢字', '한자만 입력할 수 있어요');
+    else if (han.length > 4) warn = bi('最多 4 個字', '최대 4자까지 가능해요');
+    guideHint.innerHTML = warn;
+    guideHint.classList.toggle('is-warn', !!warn);
+    guideHint.hidden = !warn;
+    const text = han.slice(0, 4).join('');
+    if (guideIn.value !== text) guideIn.value = text;
+    applyGuide({ text });
+  };
+  guideIn.addEventListener('compositionstart', () => { guideComposing = true; });
+  guideIn.addEventListener('compositionend', () => { guideComposing = false; onGuideInput(); });
+  guideIn.addEventListener('input', (e) => { if (!guideComposing && !e.isComposing) onGuideInput(); });
+  $('#free-guide-clear').addEventListener('click', () => { guideHint.hidden = true; applyGuide({ text: '' }); });
+  bindSeg(guideFontSeg, (v) => applyGuide({ maskFont: v }));
+  bindSeg(guideStyleSeg, (v) => applyGuide({ style: v }));
+  guideAlpha.addEventListener('input', () => applyGuide({ alpha: +guideAlpha.value }));
+  guideInclude.addEventListener('change', () => applyGuide({ include: guideInclude.checked }));
+  syncGuideUI();
+
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if (currentRoute !== 'free' || e.target.closest('input, textarea, dialog[open]')) return;
@@ -426,7 +494,11 @@ async function initFree() {
   return {
     fc,
     fit: () => fc.fit(),
-    load(snap) { fc.load(clone(snap)); color = isDark(snap.bg) ? '#ffffff' : '#000000'; },
+    load(snap, guide) {
+      fc.load(clone(snap));
+      color = isDark(snap.bg) ? '#ffffff' : '#000000';
+      if (guide !== undefined) applyGuide({ text: guide || '' });
+    },
     shareProvider: {
       name: () => 'free',
       getRatio: () => fc.ratio,
@@ -435,7 +507,7 @@ async function initFree() {
         const c = document.createElement('canvas');
         c.width = 1080;
         c.height = ratioHeight(fc.ratio);
-        renderSnapshot(c, fc.snapshot());
+        renderSnapshot(c, fc.snapshot(), fc.guide.include ? fc.guide : null);
         return c;
       },
     },
@@ -470,7 +542,10 @@ async function route() {
   if (r === 'free') {
     const free = await getFree();
     free.fit();
-    if (pendingFreeSnapshot) { free.load(pendingFreeSnapshot); pendingFreeSnapshot = null; }
+    if (pendingFreeSnapshot) {
+      free.load(pendingFreeSnapshot.snapshot, pendingFreeSnapshot.guide || '');
+      pendingFreeSnapshot = null;
+    }
   }
 }
 
@@ -479,7 +554,7 @@ function startExample(ex) {
     fillMode.load(ex.state);
     location.hash = '#/fill';
   } else {
-    pendingFreeSnapshot = ex.snapshot;
+    pendingFreeSnapshot = { snapshot: ex.snapshot, guide: ex.guide };
     if (location.hash === '#/free') route();
     else location.hash = '#/free';
   }

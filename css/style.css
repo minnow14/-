@@ -140,6 +140,7 @@ h1, h2, h3, p { margin: 0; }
 .stage-loading { background: rgba(255,255,255,.85); }
 .stage-empty { color: var(--g3); }
 .stage-empty.on-dark, .stage-empty.on-dark .ko { color: #9a9a9a; }
+.stage-empty.is-bottom { align-items: flex-end; padding-bottom: 14px; }
 .stage-bar { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; }
 .stage-note { font-size: 13px; color: var(--g3); text-align: center; }
 
@@ -219,6 +220,17 @@ h1, h2, h3, p { margin: 0; }
 .tool-sep { width: 1px; background: var(--g2); flex: none; margin: 6px 2px; }
 
 .seg-tabs { width: 100%; }
+.input-row { display: flex; gap: 8px; align-items: stretch; }
+.input-row .input { flex: 1; min-width: 0; }
+.input-row .btn { flex: none; }
+.quick-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.quick-chip {
+  min-width: var(--tap); min-height: var(--tap); padding: 0 8px;
+  border: var(--hair); background: var(--white); cursor: pointer;
+  font-family: "Noto Sans TC", var(--font); font-size: 20px; font-weight: 700;
+}
+.quick-chip[aria-pressed="true"] { background: var(--black); color: var(--white); border-color: var(--black); }
+.quick-chip:focus-visible { outline: 2px solid var(--black); outline-offset: 2px; }
 .palette { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
 .pal-key {
   aspect-ratio: 1 / 1; min-height: var(--tap);

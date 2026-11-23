@@ -4,6 +4,8 @@
 /* global Konva */
 import { FONTS, fontString } from './fonts.js';
 import { inkSize, drawInk } from './glyph.js';
+import { drawHanGuide } from './fill.js';
+import { isDark } from './ui.js';
 
 export const BASE_SIZE = 300;
 export const LOGICAL_W = 1080;
@@ -13,8 +15,14 @@ export function ratioHeight(ratio) {
   return ratio === '4:5' ? 1350 : 1080;
 }
 
-/** Draw a snapshot { bg, items[] } at W×H (logical width is 1080). */
-export function renderSnapshot(canvas, snap) {
+/** Guide ink: white on dark backgrounds, black on light ones (drawn with low alpha). */
+export const guideColor = (bg) => (isDark(bg) ? '#ffffff' : '#000000');
+
+/**
+ * Draw a snapshot { bg, items[] } at W×H (logical width is 1080).
+ * If `guide` is given (and has text), it is drawn under the jamo.
+ */
+export function renderSnapshot(canvas, snap, guide = null) {
   const W = canvas.width;
   const H = canvas.height;
   const k = W / LOGICAL_W;
@@ -22,6 +30,7 @@ export function renderSnapshot(canvas, snap) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = snap.bg;
   ctx.fillRect(0, 0, W, H);
+  if (guide && guide.text) drawHanGuide(ctx, W, H, { ...guide, color: guideColor(snap.bg) });
   for (const it of snap.items) {
     const { w, h } = inkSize(it.ch, koFontAt, BASE_SIZE);
     ctx.save();
@@ -79,7 +88,11 @@ export class FreeCanvas {
     this.stage = new Konva.Stage({ container: host, width: 300, height: 300 });
     this.bgLayer = new Konva.Layer({ listening: false });
     this.bgRect = new Konva.Rect({ x: 0, y: 0, width: LOGICAL_W, height: 1080, fill: this.bg });
-    this.bgLayer.add(this.bgRect);
+    // Tracing guide: not part of the document history, redrawn when text/ratio/bg change.
+    this.guide = { text: '', maskFont: 'sans', style: 'fill', alpha: 0.18, include: false };
+    this.guideCanvas = document.createElement('canvas');
+    this.guideImage = new Konva.Image({ x: 0, y: 0, image: this.guideCanvas, width: LOGICAL_W, height: 1080, visible: false });
+    this.bgLayer.add(this.bgRect, this.guideImage);
     this.layer = new Konva.Layer();
     const touch = window.matchMedia('(pointer: coarse)').matches;
     this.tr = new Konva.Transformer({
@@ -129,8 +142,8 @@ export class FreeCanvas {
     this.select(null);
     this.nodes().forEach((n) => n.destroy());
     if (snap.ratio) this.ratio = snap.ratio;
-    this.setBg(snap.bg, { record: false });
     this.bgRect.height(this.logicalH());
+    this.setBg(snap.bg, { record: false });
     for (const it of snap.items) this.layer.add(makeNode(it));
     this.tr.moveToTop();
     this.fit();
@@ -257,8 +270,30 @@ export class FreeCanvas {
   setBg(color, { record = true } = {}) {
     this.bg = color;
     this.bgRect.fill(color);
-    this.bgLayer.batchDraw();
+    this.drawGuide();
     if (record) this.commit();
+  }
+
+  // ---- tracing guide ----
+  /** Update guide settings (fonts for the text must already be loaded). */
+  setGuide(patch) {
+    Object.assign(this.guide, patch);
+    this.drawGuide();
+  }
+  hasGuide() { return !!this.guide.text; }
+  drawGuide() {
+    const H = this.logicalH();
+    const c = this.guideCanvas;
+    if (c.width !== LOGICAL_W) c.width = LOGICAL_W;
+    if (c.height !== H) c.height = H;
+    const ctx = c.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, LOGICAL_W, H);
+    if (this.guide.text) drawHanGuide(ctx, LOGICAL_W, H, { ...this.guide, color: guideColor(this.bg) });
+    this.guideImage.size({ width: LOGICAL_W, height: H });
+    this.guideImage.visible(!!this.guide.text);
+    this.guideImage.image(c);
+    this.bgLayer.batchDraw();
   }
   /** Change ratio and shift items so the composition stays vertically centred. */
   setRatio(ratio) {
@@ -267,6 +302,7 @@ export class FreeCanvas {
     this.ratio = ratio;
     this.nodes().forEach((n) => n.y(n.y() + dy));
     this.bgRect.height(this.logicalH());
+    this.drawGuide();
     this.fit();
     this.layer.batchDraw();
     this.commit();
